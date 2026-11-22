@@ -74,6 +74,11 @@ export const deleteJob = async (id) => {
   return res.data;
 };
 
+export const clearAllJobs = async () => {
+  const res = await api.post('/jobs/clear-all');
+  return res.data;
+};
+
 // --- Dashboard & Analytics APIs ---
 export const fetchDashboardStats = async () => {
   const res = await api.get('/dashboard/stats');

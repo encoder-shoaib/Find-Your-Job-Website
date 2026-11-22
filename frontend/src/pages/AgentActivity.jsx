@@ -16,9 +16,10 @@ import {
   Search,
   Sparkles,
   Building2,
-  ShieldCheck
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
-import { fetchAgentStatus, fetchAgentLogs, fetchSearchHistory, triggerAgentRun } from '../api';
+import { fetchAgentStatus, fetchAgentLogs, fetchSearchHistory, triggerAgentRun, clearAllJobs } from '../api';
 import { CardSpotlight } from '../components/ui/CardSpotlight';
 
 export function AgentActivity({ onOpenAdminModal }) {
@@ -27,6 +28,7 @@ export function AgentActivity({ onOpenAdminModal }) {
   const [searchHistory, setSearchHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [triggerResult, setTriggerResult] = useState(null);
   const [runParams, setRunParams] = useState({ limit: 5, dryRun: true });
   const pollingRef = useRef(null);
@@ -122,6 +124,31 @@ export function AgentActivity({ onOpenAdminModal }) {
         error: errMsg,
         message: errMsg,
       });
+    }
+  };
+
+  const handleClearAllJobs = async () => {
+    if (!window.confirm('Are you sure you want to delete ALL jobs from the deployment database to test collecting from 0?')) {
+      return;
+    }
+    try {
+      setClearing(true);
+      const res = await clearAllJobs();
+      if (res && res.success) {
+        setTriggerResult({
+          success: true,
+          message: 'All job data wiped successfully! Database is now empty (0 jobs). Click "Run Agent Now" to test collecting new jobs.',
+        });
+        loadData();
+      }
+    } catch (err) {
+      setTriggerResult({
+        success: false,
+        error: err.response?.data?.error || err.message || 'Failed to clear jobs',
+        message: err.response?.data?.error || err.message || 'Failed to clear jobs',
+      });
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -326,6 +353,16 @@ export function AgentActivity({ onOpenAdminModal }) {
                   <span>Run Agent Now</span>
                 </>
               )}
+            </button>
+
+            <button
+              onClick={handleClearAllJobs}
+              disabled={isAgentActive || clearing}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer"
+              title="Delete all jobs from deployment database to test collecting from 0"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+              <span>{clearing ? 'Clearing...' : 'Clear All Jobs'}</span>
             </button>
           </div>
         </div>

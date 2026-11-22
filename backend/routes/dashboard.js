@@ -3,16 +3,11 @@ const router = express.Router();
 const { getCollection, isDBConnected } = require('../config/db');
 const fs = require('fs');
 const { JOBS_JSON_PATH } = require('../config/paths');
+const { getStoredJobs } = require('../services/jobsStore');
 
 function loadJobsFromJSON() {
-  if (!fs.existsSync(JOBS_JSON_PATH)) return [];
-  try {
-    const raw = fs.readFileSync(JOBS_JSON_PATH, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    return [];
-  }
+  const jobs = getStoredJobs();
+  return Array.isArray(jobs) ? jobs : [];
 }
 
 // GET /api/dashboard/stats - Overall stats, metrics, distributions, and recent jobs (Zero-Fail Guarantee)

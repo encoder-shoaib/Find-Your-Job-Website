@@ -16,6 +16,7 @@ const {
 
 const { requireAdmin } = require('../middleware/auth');
 const { runCloudAgent } = require('../services/cloudAgent');
+const { getStoredJobs, clearAllStoredJobs } = require('../services/jobsStore');
 
 let isAgentRunning = false;
 let currentRun = {
@@ -56,20 +57,15 @@ router.get('/status', async (req, res) => {
 
     // JSON backup status
     const jsonExists = fs.existsSync(JOBS_JSON_PATH);
-    let jsonStats = { exists: false, sizeBytes: 0, lastModified: null, recordCount: 0 };
+    const storedCount = getStoredJobs().length;
+    let jsonStats = { exists: false, sizeBytes: 0, lastModified: null, recordCount: storedCount };
     if (jsonExists) {
       const stat = fs.statSync(JOBS_JSON_PATH);
-      let count = 0;
-      try {
-        const raw = fs.readFileSync(JOBS_JSON_PATH, 'utf-8');
-        const parsed = JSON.parse(raw);
-        count = Array.isArray(parsed) ? parsed.length : (parsed.jobs ? parsed.jobs.length : 0);
-      } catch (err) {}
       jsonStats = {
         exists: true,
         sizeBytes: stat.size,
         lastModified: stat.mtime.toISOString(),
-        recordCount: count,
+        recordCount: storedCount,
       };
     }
 
@@ -104,9 +100,9 @@ router.get('/status', async (req, res) => {
       } catch (e) {}
     }
 
-    // Excel row count estimation (143 rows in existing workbook, plus any new)
-    const effectiveTotalJobs = totalJobsCount || jsonStats.recordCount || 115;
-    const excelRowCount = Math.max(143, effectiveTotalJobs + 1);
+    // Effective total jobs count
+    const effectiveTotalJobs = totalJobsCount || jsonStats.recordCount || 0;
+    const excelRowCount = effectiveTotalJobs;
 
     const storageTiersData = {
       mongodb: {
@@ -118,7 +114,7 @@ router.get('/status', async (req, res) => {
         host: 'localhost:27017',
         jobsCount: effectiveTotalJobs,
         totalJobs: effectiveTotalJobs,
-        processedCount: totalProcessed || processedJsonCount || 120,
+        processedCount: totalProcessed || processedJsonCount || 0,
       },
       jsonBackup: {
         name: 'JSON Local Backup',

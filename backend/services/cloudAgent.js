@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getCollection, isDBConnected } = require('../config/db');
 const { JOBS_JSON_PATH } = require('../config/paths');
+const { getStoredJobs, addJobs } = require('./jobsStore');
 
 const SEARCH_API_ENDPOINT = 'https://api.bdjobs.com/jobs/api/v1/JobSearch/GetJobSearch';
 
@@ -88,15 +89,8 @@ async function runCloudAgent({ limit = 5, dryRun = true } = {}, onLog = () => {}
     }
   }
 
-  let localJobsList = [];
-  try {
-    if (fs.existsSync(JOBS_JSON_PATH)) {
-      const raw = fs.readFileSync(JOBS_JSON_PATH, 'utf-8');
-      const parsed = JSON.parse(raw);
-      localJobsList = Array.isArray(parsed) ? parsed : (parsed.jobs || []);
-      localJobsList.forEach((j) => j.job_id && knownIds.add(String(j.job_id)));
-    }
-  } catch (e) {}
+  const storedJobs = getStoredJobs();
+  storedJobs.forEach((j) => j.job_id && knownIds.add(String(j.job_id)));
 
   log(`Cross-tier cache loaded: ${knownIds.size} indexed jobs ready for deduplication.`);
 
@@ -213,22 +207,12 @@ async function runCloudAgent({ limit = 5, dryRun = true } = {}, onLog = () => {}
       }
     }
 
-    // JSON local backup
+    // Storage persistence via jobsStore
     try {
-      const merged = [...newDiscoveredJobs, ...localJobsList];
-      const seen = new Set();
-      const deduped = [];
-      for (const item of merged) {
-        if (!seen.has(item.job_id)) {
-          seen.add(item.job_id);
-          deduped.push(item);
-        }
-      }
-      fs.writeFileSync(JOBS_JSON_PATH, JSON.stringify(deduped, null, 2), 'utf-8');
-      log(`[JSON Success] Updated ${JOBS_JSON_PATH} (${deduped.length} total jobs).`);
+      const allJobs = addJobs(newDiscoveredJobs);
+      log(`[Storage Success] Synchronized storage: ${allJobs.length} total jobs now indexed.`);
     } catch (jErr) {
-      // In serverless / read-only filesystem, warning is logged without crashing
-      log(`[JSON Note] Serverless in-memory storage updated (${newDiscoveredJobs.length} new jobs).`);
+      log(`[Storage Warning] Storage update notice: ${jErr.message}`);
     }
 
     // Record search history in MongoDB

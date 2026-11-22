@@ -7,6 +7,7 @@ const path = require('path');
 
 const { JOBS_JSON_PATH } = require('../config/paths');
 const { requireAdmin } = require('../middleware/auth');
+const { getStoredJobs, clearAllStoredJobs, setStoredJobs } = require('../services/jobsStore');
 
 function normalizeJob(job) {
   if (!job) return null;
@@ -19,15 +20,8 @@ function normalizeJob(job) {
 }
 
 function loadJobsFromJSON() {
-  if (!fs.existsSync(JOBS_JSON_PATH)) return [];
-  try {
-    const raw = fs.readFileSync(JOBS_JSON_PATH, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.map(normalizeJob) : [];
-  } catch (err) {
-    console.warn('[Jobs] Error parsing local JSON backup:', err.message);
-    return [];
-  }
+  const jobs = getStoredJobs();
+  return Array.isArray(jobs) ? jobs.map(normalizeJob) : [];
 }
 
 // GET /api/jobs - Search, filter, sort and paginate jobs (with Zero-Fail JSON fallback)
@@ -411,6 +405,41 @@ router.put('/:id', requireAdmin, async (req, res) => {
     job: normalizeJob(result || { job_id: id, ...updateFields }),
   });
 });
+
+// POST /api/jobs/clear-all & DELETE /api/jobs/clear-all - Wipe all jobs, processed records and history (Admin only)
+async function handleClearAll(req, res) {
+  try {
+    let mongoDeleted = 0;
+    if (isDBConnected()) {
+      try {
+        const jobsCol = getCollection('jobs');
+        const procCol = getCollection('processed_jobs');
+        const searchCol = getCollection('search_history');
+        const r1 = await jobsCol.deleteMany({});
+        await procCol.deleteMany({});
+        await searchCol.deleteMany({});
+        mongoDeleted = r1.deletedCount;
+      } catch (dbErr) {
+        console.warn('[Jobs] MongoDB clear error:', dbErr.message);
+      }
+    }
+
+    clearAllStoredJobs();
+
+    return res.json({
+      success: true,
+      message: 'All job data, caches, and history successfully cleared.',
+      mongoDeleted,
+      totalRemaining: 0,
+    });
+  } catch (err) {
+    console.error('[Jobs] Clear-all error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+router.post('/clear-all', requireAdmin, handleClearAll);
+router.delete('/clear-all', requireAdmin, handleClearAll);
 
 // DELETE /api/jobs/:id - Delete job (Admin only)
 router.delete('/:id', requireAdmin, async (req, res) => {
