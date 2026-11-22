@@ -17,6 +17,17 @@ import { Modal } from '../components/ui/Modal';
 import { PriorityBadge, ScoreBadge } from '../components/ui/Badge';
 import { updateJobStatus } from '../api';
 
+function formatPostedDate(dateStr) {
+  if (!dateStr || dateStr === 'Recent') return 'Recent';
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  } catch (e) {}
+  return dateStr.split('T')[0] || dateStr;
+}
+
 export function JobDetailsModal({ job, isOpen, onClose, onStatusUpdated }) {
   if (!job) return null;
 
@@ -109,7 +120,7 @@ export function JobDetailsModal({ job, isOpen, onClose, onStatusUpdated }) {
           <div className="rounded-lg border border-slate-200 bg-white p-3">
             <div className="text-[10px] text-slate-500 uppercase font-semibold">Posted Date</div>
             <div className="text-xs font-bold text-slate-900 mt-1 truncate">
-              {job.posted_date || 'Recent'}
+              {formatPostedDate(job.posted_date || 'Recent')}
             </div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-3">

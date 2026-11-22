@@ -10,6 +10,17 @@ import {
   Sparkles
 } from 'lucide-react';
 
+function formatPostedDate(dateStr) {
+  if (!dateStr || dateStr === 'Recent') return 'Recent';
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  } catch (e) {}
+  return dateStr.split('T')[0] || dateStr;
+}
+
 export function JobCard({ job, onSelect, onToggleBookmark }) {
   if (!job) return null;
 
@@ -64,7 +75,7 @@ export function JobCard({ job, onSelect, onToggleBookmark }) {
               <h3 className="font-bold text-base md:text-lg text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
                 {title}
               </h3>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs md:text-sm text-slate-500 mt-1.5">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs md:text-sm text-slate-500 mt-1.5">
                 <span className="font-semibold text-slate-800">{company}</span>
                 <span className="text-slate-300">•</span>
                 <span className="inline-flex items-center gap-1">
@@ -74,16 +85,25 @@ export function JobCard({ job, onSelect, onToggleBookmark }) {
                 <span className="text-slate-300">•</span>
                 <span className="inline-flex items-center gap-1 text-slate-400">
                   <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                  {postedDate}
+                  {formatPostedDate(postedDate)}
                 </span>
-                {deadline && (
-                  <>
-                    <span className="text-slate-300">•</span>
-                    <span className="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50/90 px-2 py-0.5 rounded-md border border-indigo-200/80">
-                      <Clock className="h-3.5 w-3.5 text-indigo-600 flex-shrink-0" />
-                      <span>Deadline: {deadline}</span>
-                    </span>
-                  </>
+
+                {/* Replaced Deadline with Match Score & Priority Badges */}
+                <span className="text-slate-300">•</span>
+                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-semibold ${matchBadgeClass}`}>
+                  <Sparkles className={`h-3 w-3 ${matchIconClass}`} />
+                  <span>{matchScore}/10 Match</span>
+                </div>
+                {priority && (
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                    priority === 'High'
+                      ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                      : priority === 'Medium'
+                      ? 'bg-blue-50 text-blue-800 border-blue-200/90'
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}>
+                    {priority}
+                  </span>
                 )}
               </div>
             </div>
@@ -142,16 +162,18 @@ export function JobCard({ job, onSelect, onToggleBookmark }) {
         )}
       </div>
 
-      {/* Card Footer: Match Score, Priority, Details, Apply */}
+      {/* Card Footer: Deadline placed on the left, Details & Apply on the right */}
       <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold ${matchBadgeClass}`}>
-            <Sparkles className={`h-3.5 w-3.5 ${matchIconClass}`} />
-            <span>{matchScore}/10 Match</span>
-          </div>
-          {priority === 'High' && (
-            <span className="px-2.5 py-1 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
-              High
+          {deadline ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50/90 px-2.5 py-1 rounded-md border border-indigo-200/80">
+              <Clock className="h-3.5 w-3.5 text-indigo-600 flex-shrink-0" />
+              <span>Deadline: {deadline}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 py-1">
+              <Clock className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
+              <span>Open Application</span>
             </span>
           )}
         </div>
