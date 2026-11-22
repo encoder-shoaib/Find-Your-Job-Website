@@ -55,9 +55,11 @@ export function AdminJobManagement({ onSelectJob }) {
       const res = await fetchJobs(params);
       if (res && res.success) {
         let fetched = res.jobs || [];
+        let totalCount = res.pagination?.total || 0;
         const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || (status !== 'All'));
 
         if (fetched.length > 0) {
+          totalCount = res.pagination?.total || fetched.length;
           setJobs(fetched);
           try {
             if (!isFilterActive) {
@@ -71,7 +73,8 @@ export function AdminJobManagement({ onSelectJob }) {
             if (raw) {
               const cached = JSON.parse(raw);
               if (cached && cached.length > 0) {
-                fetched = cached;
+                totalCount = cached.length;
+                fetched = cached.slice((page - 1) * limit, page * limit);
               }
             }
           } catch (e) {}
@@ -81,10 +84,10 @@ export function AdminJobManagement({ onSelectJob }) {
         }
 
         setPagination({
-          page: res.pagination?.page || 1,
+          page: res.pagination?.page || page,
           limit: res.pagination?.limit || limit,
-          total: Math.max(fetched.length, res.pagination?.total || 0),
-          pages: res.pagination?.pages || res.pagination?.totalPages || 1,
+          total: totalCount,
+          pages: Math.max(1, Math.ceil(totalCount / limit)),
         });
       }
     } catch (err) {

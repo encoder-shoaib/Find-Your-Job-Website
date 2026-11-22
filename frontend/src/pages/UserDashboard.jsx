@@ -55,9 +55,11 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
       const res = await fetchJobs(params);
       if (res && res.success) {
         let fetched = res.jobs || [];
+        let totalCount = res.pagination?.total || 0;
         const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || showSavedOnly || minScore);
 
         if (fetched.length > 0) {
+          totalCount = res.pagination?.total || fetched.length;
           setJobs(fetched);
           try {
             if (!isFilterActive) {
@@ -71,7 +73,8 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
             if (raw) {
               const cached = JSON.parse(raw);
               if (cached && cached.length > 0) {
-                fetched = cached;
+                totalCount = cached.length;
+                fetched = cached.slice((page - 1) * limit, page * limit);
               }
             }
           } catch (e) {}
@@ -81,10 +84,10 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
         }
 
         setPagination({
-          page: res.pagination?.page || 1,
+          page: res.pagination?.page || page,
           limit: res.pagination?.limit || limit,
-          total: Math.max(fetched.length, res.pagination?.total || 0),
-          pages: res.pagination?.pages || res.pagination?.totalPages || 1,
+          total: totalCount,
+          pages: Math.max(1, Math.ceil(totalCount / limit)),
         });
       }
     } catch (err) {
@@ -118,10 +121,12 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
 
         const res = await fetchJobs(params);
         if (res && res.success) {
-          const fetched = res.jobs || [];
+          let fetched = res.jobs || [];
+          let totalCount = res.pagination?.total || 0;
           const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || showSavedOnly || minScore);
 
           if (fetched.length > 0) {
+            totalCount = res.pagination?.total || fetched.length;
             setJobs(fetched);
             try {
               if (!isFilterActive) {
@@ -129,17 +134,30 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
               }
             } catch (e) {}
           } else if (!isFilterActive) {
-            // Do not wipe out existing loaded jobs if serverless container briefly returned 0
+            // Keep existing or cache
+            try {
+              const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+              if (raw) {
+                const cached = JSON.parse(raw);
+                if (cached && cached.length > 0) {
+                  totalCount = cached.length;
+                  fetched = cached.slice((page - 1) * limit, page * limit);
+                  setJobs(fetched);
+                }
+              }
+            } catch (e) {}
           } else {
             setJobs([]);
           }
 
-          setPagination({
-            page: res.pagination?.page || 1,
-            limit: res.pagination?.limit || limit,
-            total: Math.max(fetched.length, res.pagination?.total || 0),
-            pages: res.pagination?.pages || res.pagination?.totalPages || 1,
-          });
+          if (totalCount > 0) {
+            setPagination({
+              page: res.pagination?.page || page,
+              limit: res.pagination?.limit || limit,
+              total: totalCount,
+              pages: Math.max(1, Math.ceil(totalCount / limit)),
+            });
+          }
         }
       } catch (e) {
         // Silent background sync

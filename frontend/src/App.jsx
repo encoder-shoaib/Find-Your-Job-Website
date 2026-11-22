@@ -24,6 +24,51 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+function enrichStatsWithCache(statsObj, recentList) {
+  let effectiveTotal = statsObj?.totalJobs ?? 0;
+  let effectiveRecent = recentList || statsObj?.recentJobs || [];
+  let catDist = { ...(statsObj?.categoryDistribution || {}) };
+  let prioDist = { ...(statsObj?.priorityDistribution || {}) };
+  let highPriority = statsObj?.highPriorityJobs ?? statsObj?.highPriority ?? 0;
+  let newToday = statsObj?.newJobsToday ?? statsObj?.newToday ?? 0;
+
+  if (effectiveTotal === 0) {
+    try {
+      const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
+      if (cachedRaw) {
+        const cachedList = JSON.parse(cachedRaw);
+        if (cachedList && cachedList.length > 0) {
+          effectiveTotal = cachedList.length;
+          effectiveRecent = cachedList.slice(0, 6);
+          newToday = cachedList.filter((j) => j.status === 'New').length;
+          const highCount = cachedList.filter((j) => j.priority === 'High').length;
+          const medCount = cachedList.filter((j) => j.priority === 'Medium').length;
+          const lowCount = cachedList.filter((j) => j.priority === 'Low').length;
+          highPriority = highCount;
+          prioDist = { High: highCount, Medium: medCount, Low: lowCount };
+          catDist = {};
+          cachedList.forEach((j) => {
+            const c = j.category || 'Other Technology Jobs';
+            catDist[c] = (catDist[c] || 0) + 1;
+          });
+        }
+      }
+    } catch (e) {}
+  }
+
+  return {
+    ...statsObj,
+    totalJobs: effectiveTotal,
+    newToday,
+    newJobsToday: newToday,
+    highPriority,
+    highPriorityJobs: highPriority,
+    recentJobs: effectiveRecent,
+    categoryDistribution: catDist,
+    priorityDistribution: prioDist,
+  };
+}
+
 export default function App() {
   // Role State: 'admin' | 'user'
   const [currentRole, setCurrentRole] = useState(() => {
@@ -50,30 +95,7 @@ export default function App() {
         fetchAgentStatus(),
       ]);
       if (statsRes?.success) {
-        // Anti-Flicker Protection: If API briefly returns 0 due to cold serverless container, check client cache
-        let effectiveTotal = statsRes.stats?.totalJobs ?? 0;
-        let effectiveRecent = statsRes.recentJobs || statsRes.stats?.recentJobs || [];
-
-        if (effectiveTotal === 0) {
-          try {
-            const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
-            if (cachedRaw) {
-              const cachedList = JSON.parse(cachedRaw);
-              if (cachedList && cachedList.length > 0) {
-                effectiveTotal = cachedList.length;
-                effectiveRecent = cachedList.slice(0, 6);
-              }
-            }
-          } catch (e) {}
-        }
-
-        setStats({
-          ...statsRes.stats,
-          totalJobs: effectiveTotal,
-          recentJobs: effectiveRecent,
-          categoryDistribution: statsRes.stats?.categoryDistribution || {},
-          priorityDistribution: statsRes.stats?.priorityDistribution || {},
-        });
+        setStats(enrichStatsWithCache(statsRes.stats, statsRes.recentJobs));
       }
       if (agentRes?.success) setAgentStatus(agentRes);
 
@@ -108,29 +130,7 @@ export default function App() {
           fetchAgentStatus(),
         ]);
         if (statsRes?.success) {
-          let effectiveTotal = statsRes.stats?.totalJobs ?? 0;
-          let effectiveRecent = statsRes.recentJobs || statsRes.stats?.recentJobs || [];
-
-          if (effectiveTotal === 0) {
-            try {
-              const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
-              if (cachedRaw) {
-                const cachedList = JSON.parse(cachedRaw);
-                if (cachedList && cachedList.length > 0) {
-                  effectiveTotal = cachedList.length;
-                  effectiveRecent = cachedList.slice(0, 6);
-                }
-              }
-            } catch (e) {}
-          }
-
-          setStats({
-            ...statsRes.stats,
-            totalJobs: effectiveTotal,
-            recentJobs: effectiveRecent,
-            categoryDistribution: statsRes.stats?.categoryDistribution || {},
-            priorityDistribution: statsRes.stats?.priorityDistribution || {},
-          });
+          setStats(enrichStatsWithCache(statsRes.stats, statsRes.recentJobs));
         }
         if (agentRes?.success) setAgentStatus(agentRes);
       } catch (e) { }
