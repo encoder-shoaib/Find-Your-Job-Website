@@ -48,6 +48,16 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Auto-connect DB middleware (cached across warm lambdas & cloud runs)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    // Non-fatal on route level; error handled gracefully
+  }
+  next();
+});
+
 // Start Server
 async function startServer() {
   try {
@@ -60,9 +70,15 @@ async function startServer() {
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    if (require.main === module) {
+      process.exit(1);
+    }
   }
 }
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
 
