@@ -55,7 +55,12 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
       const res = await fetchJobs(params);
       if (res && res.success) {
         setJobs(res.jobs || []);
-        setPagination(res.pagination || { page: 1, limit, total: 0, pages: 1 });
+        setPagination({
+          page: res.pagination?.page || 1,
+          limit: res.pagination?.limit || limit,
+          total: res.pagination?.total || 0,
+          pages: res.pagination?.pages || res.pagination?.totalPages || 1,
+        });
       }
     } catch (err) {
       console.error('Failed to load jobs:', err);
@@ -89,7 +94,12 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
         const res = await fetchJobs(params);
         if (res && res.success) {
           setJobs(res.jobs || []);
-          setPagination(res.pagination || { page: 1, limit, total: 0, pages: 1 });
+          setPagination({
+            page: res.pagination?.page || 1,
+            limit: res.pagination?.limit || limit,
+            total: res.pagination?.total || 0,
+            pages: res.pagination?.pages || res.pagination?.totalPages || 1,
+          });
         }
       } catch (e) {
         // Silent background sync

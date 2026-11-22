@@ -135,6 +135,7 @@ router.get('/', async (req, res) => {
           page: pageNum,
           limit: limitNum,
           totalPages: Math.ceil(total / limitNum) || 1,
+          pages: Math.ceil(total / limitNum) || 1,
         },
         filters: {
           categories: categories.filter(Boolean),
@@ -223,6 +224,7 @@ router.get('/', async (req, res) => {
       page: pageNum,
       limit: limitNum,
       totalPages: Math.ceil(total / limitNum) || 1,
+      pages: Math.ceil(total / limitNum) || 1,
     },
     filters: {
       categories,
