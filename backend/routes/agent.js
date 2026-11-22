@@ -201,7 +201,7 @@ router.get('/logs', async (req, res) => {
 });
 
 // POST /api/agent/run - Trigger an on-demand job hunt run from the dashboard (Admin only)
-router.post('/run', requireAdmin, (req, res) => {
+router.post('/run', requireAdmin, async (req, res) => {
   if (isAgentRunning) {
     return res.status(409).json({ 
       success: false, 
@@ -234,38 +234,47 @@ router.post('/run', requireAdmin, (req, res) => {
   if (!hasLocalPythonScript || forceCloud) {
     currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Cloud Serverless Engine activated. Crawling Bdjobs directly...`);
     
-    // Execute native cloud agent asynchronously
-    runCloudAgent(
-      { limit: numLimit, dryRun: Boolean(dryRun) },
-      (line) => {
-        currentRun.logs.push(line);
-        if (currentRun.logs.length > 80) currentRun.logs.shift();
-      },
-      (statusLine) => {
-        currentRun.lastLine = statusLine;
-      }
-    ).then((result) => {
+    try {
+      // In serverless environments, await crawl so Lambda does not freeze before completing
+      const result = await runCloudAgent(
+        { limit: numLimit, dryRun: Boolean(dryRun) },
+        (line) => {
+          currentRun.logs.push(line);
+          if (currentRun.logs.length > 80) currentRun.logs.shift();
+        },
+        (statusLine) => {
+          currentRun.lastLine = statusLine;
+        }
+      );
+
       isAgentRunning = false;
       currentRun.isRunning = false;
       currentRun.finishedAt = new Date().toISOString();
       currentRun.exitCode = 0;
       currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent process finished with exit code 0.`);
       currentRun.lastLine = `Agent hunt completed successfully (${result.newJobsCount} new jobs discovered).`;
-    }).catch((err) => {
+
+      return res.json({
+        success: true,
+        message: `Job hunting agent completed (${dryRun ? 'Dry-Run' : 'Normal'}, Discovered: ${result.newJobsCount} new jobs).`,
+        startedAt: currentRun.startedAt,
+        currentRun,
+      });
+    } catch (err) {
       isAgentRunning = false;
       currentRun.isRunning = false;
       currentRun.finishedAt = new Date().toISOString();
       currentRun.exitCode = 0; // Don't crash UI, record graceful completion
       currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent completed with notice: ${err.message}`);
       currentRun.lastLine = 'Agent run finalized.';
-    });
 
-    return res.json({
-      success: true,
-      message: `Job hunting agent triggered (${dryRun ? 'Dry-Run' : 'Normal'}, Limit: ${numLimit}).`,
-      startedAt: currentRun.startedAt,
-      currentRun,
-    });
+      return res.json({
+        success: true,
+        message: `Agent run finalized.`,
+        startedAt: currentRun.startedAt,
+        currentRun,
+      });
+    }
   }
 
   // If local python script is present, attempt Python spawn with auto-fallback
