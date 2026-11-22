@@ -63,13 +63,13 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
           setJobs(fetched);
           try {
             if (!isFilterActive) {
-              localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(fetched));
+              localStorage.setItem('yourfindjob_cached_jobs', JSON.stringify(fetched));
             }
           } catch (e) {}
         } else if (!isFilterActive) {
           // If no filter active but API returned 0 due to cold serverless container, restore cached jobs
           try {
-            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            const raw = localStorage.getItem('yourfindjob_cached_jobs') || localStorage.getItem('yourfiendjob_cached_jobs');
             if (raw) {
               const cached = JSON.parse(raw);
               if (cached && cached.length > 0) {
@@ -130,13 +130,13 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
             setJobs(fetched);
             try {
               if (!isFilterActive) {
-                localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(fetched));
+                localStorage.setItem('yourfindjob_cached_jobs', JSON.stringify(fetched));
               }
             } catch (e) {}
           } else if (!isFilterActive) {
             // Keep existing or cache
             try {
-              const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+              const raw = localStorage.getItem('yourfindjob_cached_jobs') || localStorage.getItem('yourfiendjob_cached_jobs');
               if (raw) {
                 const cached = JSON.parse(raw);
                 if (cached && cached.length > 0) {

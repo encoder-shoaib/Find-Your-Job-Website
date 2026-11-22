@@ -3,7 +3,7 @@ import { ShieldCheck, Key } from 'lucide-react';
 
 export function UserRoleCard({ adminUser, onOpenCredentials, className = "" }) {
   const name = adminUser?.name || 'Administrator';
-  const email = adminUser?.email || 'admin@yourfiendjob.com';
+  const email = adminUser?.email || 'admin@yourfindjob.com';
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white p-3.5 space-y-3 ${className}`}>

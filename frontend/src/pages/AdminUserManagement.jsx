@@ -246,7 +246,7 @@ export function AdminUserManagement() {
                             <span>{isAdmin ? 'Make User' : 'Make Admin'}</span>
                           </button>
 
-                          {u.email !== 'admin@yourfiendjob.com' && (
+                          {u.email !== 'admin@yourfindjob.com' && (
                             <button
                               onClick={() => handleDeleteUser(u)}
                               className="p-1.5 rounded-md hover:bg-rose-50 text-rose-600 transition"

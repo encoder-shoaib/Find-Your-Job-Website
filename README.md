@@ -1,8 +1,8 @@
-# YourFiendJob-Website
+# YourFindJob-Website
 
-# YourFiendJob - Role-Based MERN SaaS Platform 🌐💼
+# YourFindJob - Role-Based MERN SaaS Platform 🌐💼
 
-MERN Stack Role-Based SaaS প্ল্যাটফর্ম for YourFiendJob AI Job Hunting Agent.
+MERN Stack Role-Based SaaS প্ল্যাটফর্ম for YourFindJob AI Job Hunting Agent.
 
 ---
 
@@ -32,7 +32,7 @@ MERN Stack Role-Based SaaS প্ল্যাটফর্ম for YourFiendJob AI
 
 | অ্যাকাউন্ট টাইপ | ইমেইল / ইউজারনেম | পাসওয়ার্ড | রোল | পারমিশনস |
 |---|---|---|---|---|
-| **Super Admin** | `admin@yourfiendjob.com` (বা `admin`) | **`Admin@2026#Jobs`** | `admin` | Full CRUD, Agent Run, User Manage, Settings |
+| **Super Admin** | `admin@yourfindjob.com` (বা `admin`) | **`Admin@2026#Jobs`** | `admin` | Full CRUD, Agent Run, User Manage, Settings |
 | **Candidate User** | `candidate@ufirst.com` (বা `candidate`) | **`User@2026#Jobs`** | `user` | Job Cards, Search, Filters, Bookmark, Apply |
 
 *ওয়েবসাইটের উপরের Navbar-এ **"1-Click Role Switcher"** বোতাম রয়েছে, যা দিয়ে কোনো পাসওয়ার্ড টাইপ না করেই মুহূর্তের মধ্যে দুটি রোলের ড্যাশবোর্ড সুইচ করে পরীক্ষা করা যায়!*

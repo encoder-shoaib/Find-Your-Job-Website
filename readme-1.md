@@ -1,11 +1,11 @@
-# 🚀 YourFiendJob: Professional Production Hosting & 24/7 Cloud Architecture Guide
+# 🚀 YourFindJob: Professional Production Hosting & 24/7 Cloud Architecture Guide
 
 > **Live URLs (লাইভ লিংকসমূহ):**
 > - 🌐 **Production Frontend (Website):** [https://frontend-eight-omega-44.vercel.app](https://frontend-eight-omega-44.vercel.app)
 > - ⚙️ **Production Backend API:** [https://backend-beta-six-21.vercel.app](https://backend-beta-six-21.vercel.app)
 > - 🏥 **API Health Check Status:** [https://backend-beta-six-21.vercel.app/api/health](https://backend-beta-six-21.vercel.app/api/health)
-> - 📦 **Website GitHub Repository:** [https://github.com/encoder-shoaib/YourFiendJob-Website](https://github.com/encoder-shoaib/YourFiendJob-Website)
-> - 🤖 **AI Agent GitHub Repository:** [https://github.com/encoder-shoaib/YourFiendJob-AI-agent](https://github.com/encoder-shoaib/YourFiendJob-AI-agent)
+> - 📦 **Website GitHub Repository:** [https://github.com/encoder-shoaib/YourFindJob-Website](https://github.com/encoder-shoaib/YourFindJob-Website)
+> - 🤖 **AI Agent GitHub Repository:** [https://github.com/encoder-shoaib/YourFindJob-AI-agent](https://github.com/encoder-shoaib/YourFindJob-AI-agent)
 
 ---
 
@@ -26,7 +26,7 @@
                            │ (Central Cloud Database)
 ┌──────────────────────────▼─────────────────────────────┐
 │           🍃 MongoDB Atlas (Cloud Database - Free)      │
-│            cluster0.mongodb.net/yourfiendjob_db        │
+│            cluster0.mongodb.net/yourfindjob_db        │
 └──────────────────────────▲─────────────────────────────┘
                            │ (Crawls & Saves Jobs Daily)
 ┌──────────────────────────┴─────────────────────────────┐
@@ -41,14 +41,14 @@
 
 ### ধাপ ১: ফ্রন্টএন্ড ক্লাউড হোস্টিং (Vercel)
 1. ফ্রন্টএন্ড কোডে `import.meta.env.VITE_API_URL` কনফিগারেশন যোগ করা হয়েছে, যাতে লোকাল ও প্রোডাকশন এপিআই স্বাধীনভাবে কাজ করতে পারে।
-2. `YourFiendJob-Website/frontend/.env.production` ফাইলে প্রোডাকশন ব্যাকএন্ড এপিআই লিংক যুক্ত করা হয়েছে:
+2. `YourFindJob-Website/frontend/.env.production` ফাইলে প্রোডাকশন ব্যাকএন্ড এপিআই লিংক যুক্ত করা হয়েছে:
    ```env
    VITE_API_URL=https://backend-beta-six-21.vercel.app/api
    ```
 3. Vite দিয়ে প্রোডাকশন বিল্ড অপ্টিমাইজেশন সম্পন্ন করা হয়েছে (`npm run build`).
 4. Vercel সিএলআই-এর মাধ্যমে ডিপ্লয় করা হয়েছে:
    ```bash
-   cd YourFiendJob-Website/frontend
+   cd YourFindJob-Website/frontend
    vercel deploy --prod --yes
    ```
    **ফলাফল:** লাইভ ফ্রন্টএন্ড প্রস্তুত: `https://frontend-eight-omega-44.vercel.app`
@@ -77,7 +77,7 @@
    ```
 3. Vercel সিএলআই দিয়ে ব্যাকএন্ড ডিপ্লয় করা হয়েছে:
    ```bash
-   cd YourFiendJob-Website/backend
+   cd YourFindJob-Website/backend
    vercel deploy --yes
    ```
    **ফলাফল:** লাইভ ব্যাকএন্ড প্রস্তুত: `https://backend-beta-six-21.vercel.app`
@@ -91,7 +91,7 @@
 3. **Database Access** এ একটি ডাটাবেস ইউজার ও পাসওয়ার্ড তৈরি করুন।
 4. **Connect** বোতামে ক্লিক করে কানেকশন স্ট্রিং সংগ্রহ করুন:
    ```env
-   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/yourfiendjob_db?retryWrites=true&w=majority
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/yourfindjob_db?retryWrites=true&w=majority
    ```
 5. **Vercel ড্যাশবোর্ডে যুক্ত করার নিয়ম:**
    - [Vercel Dashboard](https://vercel.com/dashboard) এ যান -> `backend` প্রজেক্টে ক্লিক করুন।
@@ -101,10 +101,10 @@
 
 ### ধাপ ৪: স্বয়ংক্রিয় ক্লাউড AI এজেন্ট রানার (GitHub Actions)
 আপনার পিসি সম্পূর্ণ বন্ধ থাকলেও যেন প্রতিদিন সকালে AI এজেন্ট নতুন চাকরি খুঁজে এনে ডাটাবেসে সেভ করে এবং আপনাকে ইমেইল পাঠায়:
-1. `YourFiendJob-AI-agent/.github/workflows/daily_agent_hunt.yml` তৈরি করে গিটহাবে পুশ করা হয়েছে।
+1. `YourFindJob-AI-agent/.github/workflows/daily_agent_hunt.yml` তৈরি করে গিটহাবে পুশ করা হয়েছে।
 2. এটি প্রতিদিন বাংলাদেশ সময় সকাল ৮:০০ টায় (`cron: '0 2 * * *'`) স্বয়ংক্রিয়ভাবে ক্লাউডে রান হয়।
 3. **গিটহাবে সিক্রেটস সেট করার নিয়ম:**
-   - GitHub-এ [YourFiendJob-AI-agent](https://github.com/encoder-shoaib/YourFiendJob-AI-agent) রিপোজিটরিতে যান।
+   - GitHub-এ [YourFindJob-AI-agent](https://github.com/encoder-shoaib/YourFindJob-AI-agent) রিপোজিটরিতে যান।
    - **Settings** -> **Secrets and variables** -> **Actions** এ যান।
    - **New repository secret** এ ক্লিক করে নিচের কী-গুলো যুক্ত করুন:
      - `MONGODB_URI`: (আপনার MongoDB Atlas ক্লাউড ইউআরএল)
@@ -123,8 +123,8 @@
 | কম্পোনেন্ট | টেস্ট কমান্ড / এন্ডপয়েন্ট | টেস্ট ফলাফল | স্ট্যাটাস |
 |---|---|---|---|
 | **Frontend CDN** | `GET https://frontend-eight-omega-44.vercel.app` | `HTTP/1.1 200 OK` (Vite SPA Load) | ✅ PASSED |
-| **Backend Root** | `GET https://backend-beta-six-21.vercel.app/` | `{"success":true,"status":"running","service":"YourFiendJob Backend API"}` | ✅ PASSED |
-| **Backend Health** | `GET https://backend-beta-six-21.vercel.app/api/health` | `{"status":"healthy","service":"YourFiendJob API Server"}` | ✅ PASSED |
+| **Backend Root** | `GET https://backend-beta-six-21.vercel.app/` | `{"success":true,"status":"running","service":"YourFindJob Backend API"}` | ✅ PASSED |
+| **Backend Health** | `GET https://backend-beta-six-21.vercel.app/api/health` | `{"status":"healthy","service":"YourFindJob API Server"}` | ✅ PASSED |
 | **Auth Credentials** | `GET https://backend-beta-six-21.vercel.app/api/auth/demo-credentials` | `{"success":true, accounts: {...}}` | ✅ PASSED |
 | **CORS Policy** | Cross-Origin Header verification | `Access-Control-Allow-Origin: *` | ✅ PASSED |
 | **Automation** | GitHub Actions Workflow syntax & push | `.github/workflows/daily_agent_hunt.yml` | ✅ PASSED |
@@ -134,7 +134,7 @@
 ## ৪. লাইভ ড্যাশবোর্ড ব্যবহারের ক্রেডেনশিয়াল
 
 - **Super Admin Panel:**
-  - ইউজারনেম / ইমেইল: `admin@yourfiendjob.com` বা `admin`
+  - ইউজারনেম / ইমেইল: `admin@yourfindjob.com` বা `admin`
   - পাসওয়ার্ড: `Admin@2026#Jobs`
 - **Candidate User Panel:**
   - ইউজারনেম / ইমেইল: `candidate@ufirst.com` বা `candidate`

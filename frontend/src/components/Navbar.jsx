@@ -21,7 +21,7 @@ export function Navbar({
         <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs ${isAdmin ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
           <Bot className="h-5 w-5" />
         </div>
-        <span className="font-extrabold tracking-tight text-slate-900 text-lg">YourFiendJob</span>
+        <span className="font-extrabold tracking-tight text-slate-900 text-lg">YourFindJob</span>
       </div>
 
       {/* Right Controls */}

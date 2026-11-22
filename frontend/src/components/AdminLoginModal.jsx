@@ -19,7 +19,7 @@ export function AdminLoginModal({ isOpen, onClose }) {
   const [copied, setCopied] = useState(false);
 
   const adminCredentials = {
-    email: 'admin@yourfiendjob.com',
+    email: 'admin@yourfindjob.com',
     username: 'admin',
     password: 'Admin@2026#Jobs',
     role: 'Super Admin',

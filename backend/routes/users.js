@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
           {
             _id: 'admin_static_1',
             name: 'uFirst Administrator',
-            email: 'admin@yourfiendjob.com',
+            email: 'admin@yourfindjob.com',
             username: 'admin',
             role: 'admin',
             organization: 'uFirst-LTD',
@@ -134,7 +134,7 @@ router.delete('/:id', async (req, res) => {
 
     // Prevent deleting the primary admin
     const target = await usersCol.findOne(filter);
-    if (target && target.email === 'admin@yourfiendjob.com') {
+    if (target && target.email === 'admin@yourfindjob.com') {
       return res.status(400).json({ success: false, error: 'Cannot delete primary root administrator account.' });
     }
 

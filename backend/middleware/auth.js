@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'yourfiendjob-enterprise-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'yourfindjob-enterprise-secret-key-2026';
 
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;

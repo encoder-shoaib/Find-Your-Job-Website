@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Auto-attach JWT token if present in localStorage
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('yourfiendjob_token');
+  const token = localStorage.getItem('yourfindjob_token') || localStorage.getItem('yourfiendjob_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,7 +21,7 @@ api.interceptors.request.use((config) => {
 export const loginUser = async (usernameOrEmail, password) => {
   const res = await api.post('/auth/login', { usernameOrEmail, password });
   if (res.data.token) {
-    localStorage.setItem('yourfiendjob_token', res.data.token);
+    localStorage.setItem('yourfindjob_token', res.data.token);
   }
   return res.data;
 };
@@ -29,7 +29,7 @@ export const loginUser = async (usernameOrEmail, password) => {
 export const registerUser = async (data) => {
   const res = await api.post('/auth/register', data);
   if (res.data.token) {
-    localStorage.setItem('yourfiendjob_token', res.data.token);
+    localStorage.setItem('yourfindjob_token', res.data.token);
   }
   return res.data;
 };
@@ -45,6 +45,7 @@ export const fetchDemoCredentials = async () => {
 };
 
 export const logoutUser = () => {
+  localStorage.removeItem('yourfindjob_token');
   localStorage.removeItem('yourfiendjob_token');
 };
 

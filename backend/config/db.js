@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/';
-const dbName = process.env.MONGODB_DB_NAME || 'yourfiendjob_db';
+const dbName = process.env.MONGODB_DB_NAME || 'yourfindjob_db';
 
 let client = null;
 let db = null;

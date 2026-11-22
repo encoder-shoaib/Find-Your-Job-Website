@@ -1,7 +1,7 @@
 {
-  "name": "yourfiendjob-backend",
+  "name": "yourfindjob-backend",
   "version": "1.0.0",
-  "description": "Express Backend for YourFiendJob SaaS Dashboard",
+  "description": "Express Backend for YourFindJob SaaS Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

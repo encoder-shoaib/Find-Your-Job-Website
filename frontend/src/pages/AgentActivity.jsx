@@ -81,11 +81,11 @@ export function AgentActivity({ onOpenAdminModal, onAgentRunComplete }) {
         // Immediate client-side persistence of newly found jobs
         if (res.newJobs && res.newJobs.length > 0) {
           try {
-            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            const raw = localStorage.getItem('yourfindjob_cached_jobs');
             const prev = raw ? JSON.parse(raw) : [];
             const seen = new Set(prev.map((j) => String(j.job_id)));
             const combined = [...res.newJobs.filter((j) => !seen.has(String(j.job_id))), ...prev];
-            localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(combined));
+            localStorage.setItem('yourfindjob_cached_jobs', JSON.stringify(combined));
           } catch (e) {}
         }
 
@@ -154,7 +154,7 @@ export function AgentActivity({ onOpenAdminModal, onAgentRunComplete }) {
       setClearing(true);
       const res = await clearAllJobs();
       if (res && res.success) {
-        localStorage.removeItem('yourfiendjob_cached_jobs');
+        localStorage.removeItem('yourfindjob_cached_jobs');
         if (onAgentRunComplete) {
           onAgentRunComplete({ newJobs: [], totalJobs: 0 });
         }
@@ -234,7 +234,7 @@ export function AgentActivity({ onOpenAdminModal, onAgentRunComplete }) {
           <div className="mt-4 space-y-2 text-xs">
             <div className="flex justify-between text-slate-500">
               <span>Database:</span>
-              <span className="font-mono text-slate-900 font-bold">{tiers.mongodb?.database || 'yourfiendjob_db'}</span>
+              <span className="font-mono text-slate-900 font-bold">{tiers.mongodb?.database || 'yourfindjob_db'}</span>
             </div>
             <div className="flex justify-between text-slate-500">
               <span>Total Jobs Stored:</span>

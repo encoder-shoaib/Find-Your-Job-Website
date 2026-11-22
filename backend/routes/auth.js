@@ -16,7 +16,7 @@ async function seedDefaultAccounts() {
       const hashedPassword = await bcrypt.hash('Admin@2026#Jobs', 10);
       await usersCol.insertOne({
         username: 'admin',
-        email: 'admin@yourfiendjob.com',
+        email: 'admin@yourfindjob.com',
         password: hashedPassword,
         plain_hint: 'Admin@2026#Jobs',
         name: 'uFirst Administrator',
@@ -26,7 +26,7 @@ async function seedDefaultAccounts() {
         permissions: ['all'],
         created_at: new Date().toISOString(),
       });
-      console.log('[Auth] Seeded Admin: admin@yourfiendjob.com / Admin@2026#Jobs');
+      console.log('[Auth] Seeded Admin: admin@yourfindjob.com / Admin@2026#Jobs');
     }
 
     // 2. Seed Regular User / Candidate
@@ -123,9 +123,9 @@ router.post('/login', async (req, res) => {
 
     // Zero-Fail Fallback for default accounts when MongoDB is offline / initializing
     if (!isDBConnected()) {
-      if ((query === 'admin' || query === 'admin@yourfiendjob.com') && password === 'Admin@2026#Jobs') {
+      if ((query === 'admin' || query === 'admin@yourfindjob.com' || query === 'admin@yourfiendjob.com') && password === 'Admin@2026#Jobs') {
         const token = jwt.sign(
-          { id: 'admin_static_id', email: 'admin@yourfiendjob.com', name: 'uFirst Administrator', role: 'admin' },
+          { id: 'admin_static_id', email: 'admin@yourfindjob.com', name: 'uFirst Administrator', role: 'admin' },
           JWT_SECRET,
           { expiresIn: '7d' }
         );
@@ -135,7 +135,7 @@ router.post('/login', async (req, res) => {
           user: {
             id: 'admin_static_id',
             name: 'uFirst Administrator',
-            email: 'admin@yourfiendjob.com',
+            email: 'admin@yourfindjob.com',
             role: 'admin',
             organization: 'uFirst-LTD',
           },
@@ -270,7 +270,7 @@ router.get('/demo-credentials', (req, res) => {
     success: true,
     accounts: {
       admin: {
-        email: 'admin@yourfiendjob.com',
+        email: 'admin@yourfindjob.com',
         username: 'admin',
         password: 'Admin@2026#Jobs',
         role: 'admin',

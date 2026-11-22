@@ -34,9 +34,9 @@ app.use('/api/users', usersRouter);
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
-    service: 'YourFiendJob Backend API',
+    service: 'YourFindJob Backend API',
     status: 'running',
-    message: 'YourFiendJob Backend API is online and operational.',
+    message: 'YourFindJob Backend API is online and operational.',
     endpoints: {
       health: '/api/health',
       jobs: '/api/jobs',
@@ -52,7 +52,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'YourFiendJob API Server',
+    service: 'YourFindJob API Server',
   });
 });
 
@@ -81,7 +81,7 @@ async function startServer() {
     await connectDB();
     app.listen(PORT, () => {
       console.log(`====================================================`);
-      console.log(`  YourFiendJob Backend Server running on port ${PORT}`);
+      console.log(`  YourFindJob Backend Server running on port ${PORT}`);
       console.log(`  Health Check: http://localhost:${PORT}/api/health`);
       console.log(`====================================================`);
     });

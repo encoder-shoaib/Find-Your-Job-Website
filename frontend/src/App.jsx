@@ -34,7 +34,7 @@ function enrichStatsWithCache(statsObj, recentList) {
 
   if (effectiveTotal === 0) {
     try {
-      const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
+      const cachedRaw = localStorage.getItem('yourfindjob_cached_jobs') || localStorage.getItem('yourfiendjob_cached_jobs');
       if (cachedRaw) {
         const cachedList = JSON.parse(cachedRaw);
         if (cachedList && cachedList.length > 0) {
@@ -72,12 +72,12 @@ function enrichStatsWithCache(statsObj, recentList) {
 export default function App() {
   // Role State: 'admin' | 'user'
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('yourfiendjob_role') || 'user';
+    return localStorage.getItem('yourfindjob_role') || localStorage.getItem('yourfiendjob_role') || 'user';
   });
 
   // Active Tab
   const [currentTab, setCurrentTab] = useState(() => {
-    const role = localStorage.getItem('yourfiendjob_role') || 'user';
+    const role = localStorage.getItem('yourfindjob_role') || localStorage.getItem('yourfiendjob_role') || 'user';
     return role === 'admin' ? 'dashboard' : 'user-explore';
   });
 
@@ -108,7 +108,7 @@ export default function App() {
         }
       } catch (e) {
         // Auto login default demo account
-        const defaultEmail = currentRole === 'admin' ? 'admin@yourfiendjob.com' : 'candidate@ufirst.com';
+        const defaultEmail = currentRole === 'admin' ? 'admin@yourfindjob.com' : 'candidate@ufirst.com';
         const defaultPass = currentRole === 'admin' ? 'Admin@2026#Jobs' : 'User@2026#Jobs';
         const autoLogin = await loginUser(defaultEmail, defaultPass).catch(() => null);
         if (autoLogin?.success) {
@@ -146,11 +146,11 @@ export default function App() {
   const handleToggleRoleView = async () => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
     setCurrentRole(newRole);
-    localStorage.setItem('yourfiendjob_role', newRole);
+    localStorage.setItem('yourfindjob_role', newRole);
     setCurrentTab(newRole === 'admin' ? 'dashboard' : 'user-explore');
 
     // Sign in matching demo account
-    const accEmail = newRole === 'admin' ? 'admin@yourfiendjob.com' : 'candidate@ufirst.com';
+    const accEmail = newRole === 'admin' ? 'admin@yourfindjob.com' : 'candidate@ufirst.com';
     const accPass = newRole === 'admin' ? 'Admin@2026#Jobs' : 'User@2026#Jobs';
     try {
       const res = await loginUser(accEmail, accPass);
@@ -162,7 +162,7 @@ export default function App() {
     setCurrentUser(user);
     const roleNormalized = user.role === 'admin' ? 'admin' : 'user';
     setCurrentRole(roleNormalized);
-    localStorage.setItem('yourfiendjob_role', roleNormalized);
+    localStorage.setItem('yourfindjob_role', roleNormalized);
     setCurrentTab(roleNormalized === 'admin' ? 'dashboard' : 'user-explore');
   };
 
@@ -170,7 +170,7 @@ export default function App() {
     logoutUser();
     setCurrentUser(null);
     setCurrentRole('user');
-    localStorage.setItem('yourfiendjob_role', 'user');
+    localStorage.setItem('yourfindjob_role', 'user');
     setCurrentTab('user-explore');
   };
 

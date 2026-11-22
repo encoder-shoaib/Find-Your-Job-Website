@@ -110,7 +110,7 @@ router.get('/status', async (req, res) => {
         status: mongoOk ? 'Healthy' : 'Disconnected',
         isOnline: mongoOk,
         error: mongoError,
-        database: 'yourfiendjob_db',
+        database: 'yourfindjob_db',
         host: 'localhost:27017',
         jobsCount: effectiveTotalJobs,
         totalJobs: effectiveTotalJobs,
