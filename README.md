@@ -1,4 +1,4 @@
-# YourFindJob - Role-Based MERN SaaS Platform 🌐💼
+# FindYourJob - Role-Based MERN SaaS Platform 🌐💼
 
 A modern, production-grade **Role-Based MERN Stack SaaS Platform** engineered for the **YourFindJob** autonomous AI job-hunting ecosystem.
 
