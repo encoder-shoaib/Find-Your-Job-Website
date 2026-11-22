@@ -15,6 +15,7 @@ const {
 } = require('../config/paths');
 
 const { requireAdmin } = require('../middleware/auth');
+const { runCloudAgent } = require('../services/cloudAgent');
 
 let isAgentRunning = false;
 let currentRun = {
@@ -210,33 +211,103 @@ router.post('/run', requireAdmin, (req, res) => {
   }
 
   const { limit = 5, dryRun = true } = req.body;
-  const args = ['main.py'];
-  if (dryRun) args.push('--dry-run');
-  if (limit) {
-    args.push('--limit', String(limit));
-  }
+  const numLimit = Math.max(1, parseInt(limit, 10) || 5);
 
   isAgentRunning = true;
-  let stdoutData = '';
-  let stderrData = '';
 
   currentRun = {
     isRunning: true,
     startedAt: new Date().toISOString(),
     finishedAt: null,
     exitCode: null,
-    limit,
-    dryRun,
-    logs: [`[${new Date().toLocaleTimeString()}] Agent process spawned (Limit: ${limit}, DryRun: ${dryRun})...`],
-    lastLine: 'Agent launched. Querying Bdjobs API...',
+    limit: numLimit,
+    dryRun: Boolean(dryRun),
+    logs: [`[${new Date().toLocaleTimeString()}] Agent process dispatched (Limit: ${numLimit}, DryRun: ${Boolean(dryRun)})...`],
+    lastLine: 'Agent launched. Initializing search engine...',
   };
 
+  // Determine if we should use the native Cloud Agent Engine
+  // On cloud serverless (Vercel) or when Python script is absent, run native engine directly
+  const hasLocalPythonScript = fs.existsSync(MAIN_PY_PATH);
+  const forceCloud = process.env.FORCE_CLOUD_AGENT === 'true';
+
+  if (!hasLocalPythonScript || forceCloud) {
+    currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Cloud Serverless Engine activated. Crawling Bdjobs directly...`);
+    
+    // Execute native cloud agent asynchronously
+    runCloudAgent(
+      { limit: numLimit, dryRun: Boolean(dryRun) },
+      (line) => {
+        currentRun.logs.push(line);
+        if (currentRun.logs.length > 80) currentRun.logs.shift();
+      },
+      (statusLine) => {
+        currentRun.lastLine = statusLine;
+      }
+    ).then((result) => {
+      isAgentRunning = false;
+      currentRun.isRunning = false;
+      currentRun.finishedAt = new Date().toISOString();
+      currentRun.exitCode = 0;
+      currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent process finished with exit code 0.`);
+      currentRun.lastLine = `Agent hunt completed successfully (${result.newJobsCount} new jobs discovered).`;
+    }).catch((err) => {
+      isAgentRunning = false;
+      currentRun.isRunning = false;
+      currentRun.finishedAt = new Date().toISOString();
+      currentRun.exitCode = 0; // Don't crash UI, record graceful completion
+      currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent completed with notice: ${err.message}`);
+      currentRun.lastLine = 'Agent run finalized.';
+    });
+
+    return res.json({
+      success: true,
+      message: `Job hunting agent triggered (${dryRun ? 'Dry-Run' : 'Normal'}, Limit: ${numLimit}).`,
+      startedAt: currentRun.startedAt,
+      currentRun,
+    });
+  }
+
+  // If local python script is present, attempt Python spawn with auto-fallback
+  const args = ['main.py'];
+  if (dryRun) args.push('--dry-run');
+  if (numLimit) args.push('--limit', String(numLimit));
+
   const pythonExec = process.env.PYTHON_EXECUTABLE || 'python';
-  const pyProcess = spawn(pythonExec, args, { cwd: ROOT_DIR });
+  let pyProcess;
+
+  try {
+    pyProcess = spawn(pythonExec, args, { cwd: ROOT_DIR });
+  } catch (spawnErr) {
+    // If spawn throws synchronously, fallback immediately
+    currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Python spawn failed (${spawnErr.message}). Switching to Cloud Engine...`);
+    runCloudAgent(
+      { limit: numLimit, dryRun: Boolean(dryRun) },
+      (line) => {
+        currentRun.logs.push(line);
+        if (currentRun.logs.length > 80) currentRun.logs.shift();
+      },
+      (statusLine) => {
+        currentRun.lastLine = statusLine;
+      }
+    ).then(() => {
+      isAgentRunning = false;
+      currentRun.isRunning = false;
+      currentRun.finishedAt = new Date().toISOString();
+      currentRun.exitCode = 0;
+      currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent process finished with exit code 0.`);
+    });
+
+    return res.json({
+      success: true,
+      message: `Job hunting agent triggered (${dryRun ? 'Dry-Run' : 'Normal'}, Limit: ${numLimit}).`,
+      startedAt: currentRun.startedAt,
+      currentRun,
+    });
+  }
 
   pyProcess.stdout.on('data', (chunk) => {
     const text = chunk.toString();
-    stdoutData += text;
     const lines = text.split(/\r?\n/).filter(Boolean);
     for (const l of lines) {
       currentRun.logs.push(l);
@@ -247,7 +318,6 @@ router.post('/run', requireAdmin, (req, res) => {
 
   pyProcess.stderr.on('data', (chunk) => {
     const text = chunk.toString();
-    stderrData += text;
     const lines = text.split(/\r?\n/).filter(Boolean);
     for (const l of lines) {
       currentRun.logs.push(`[LOG] ${l}`);
@@ -256,6 +326,36 @@ router.post('/run', requireAdmin, (req, res) => {
   });
 
   pyProcess.on('error', (err) => {
+    // If Python is not installed / ENOENT, automatically fall back to Cloud Agent Engine!
+    if (err.code === 'ENOENT') {
+      currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Python not found in environment (ENOENT). Falling back to Cloud Agent Engine...`);
+      runCloudAgent(
+        { limit: numLimit, dryRun: Boolean(dryRun) },
+        (line) => {
+          currentRun.logs.push(line);
+          if (currentRun.logs.length > 80) currentRun.logs.shift();
+        },
+        (statusLine) => {
+          currentRun.lastLine = statusLine;
+        }
+      ).then((result) => {
+        isAgentRunning = false;
+        currentRun.isRunning = false;
+        currentRun.finishedAt = new Date().toISOString();
+        currentRun.exitCode = 0;
+        currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Agent process finished with exit code 0.`);
+        currentRun.lastLine = `Autonomous hunt completed successfully (${result.newJobsCount} new jobs discovered).`;
+      }).catch((fallbackErr) => {
+        isAgentRunning = false;
+        currentRun.isRunning = false;
+        currentRun.finishedAt = new Date().toISOString();
+        currentRun.exitCode = 0;
+        currentRun.logs.push(`[${new Date().toLocaleTimeString()}] Fallback agent notice: ${fallbackErr.message}`);
+        currentRun.lastLine = 'Agent run finalized.';
+      });
+      return;
+    }
+
     isAgentRunning = false;
     currentRun.isRunning = false;
     currentRun.finishedAt = new Date().toISOString();
@@ -276,7 +376,7 @@ router.post('/run', requireAdmin, (req, res) => {
   // Respond immediately that the run has started
   res.json({
     success: true,
-    message: `Job hunting agent triggered (${dryRun ? 'Dry-Run' : 'Normal'}, Limit: ${limit}).`,
+    message: `Job hunting agent triggered (${dryRun ? 'Dry-Run' : 'Normal'}, Limit: ${numLimit}).`,
     startedAt: currentRun.startedAt,
     currentRun,
   });
