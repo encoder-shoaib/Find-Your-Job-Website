@@ -30,6 +30,23 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    service: 'YourFiendJob Backend API',
+    status: 'running',
+    message: 'YourFiendJob Backend API is online and operational.',
+    endpoints: {
+      health: '/api/health',
+      jobs: '/api/jobs',
+      authDemo: '/api/auth/demo-credentials',
+      dashboard: '/api/dashboard/stats',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
