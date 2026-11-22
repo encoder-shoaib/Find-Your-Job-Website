@@ -70,12 +70,34 @@ export function JobCard({ job, onSelect, onToggleBookmark }) {
               {initial}
             </div>
             
-            {/* Title & Company Meta */}
+            {/* Title & Badges Header */}
             <div className="min-w-0">
-              <h3 className="font-bold text-base md:text-lg text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
-                {title}
-              </h3>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs md:text-sm text-slate-500 mt-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-bold text-base md:text-lg text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                  {title}
+                </h3>
+
+                <div className="inline-flex items-center gap-1.5 flex-nowrap">
+                  <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-semibold whitespace-nowrap ${matchBadgeClass}`}>
+                    <Sparkles className={`h-3 w-3 ${matchIconClass}`} />
+                    <span>{matchScore}/10 Match</span>
+                  </div>
+                  {priority && (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap ${
+                      priority === 'High'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                        : priority === 'Medium'
+                        ? 'bg-blue-50 text-blue-800 border-blue-200/90'
+                        : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}>
+                      {priority === 'High' ? 'High Priority' : priority}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Company & Meta Subtitle */}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs md:text-sm text-slate-500 mt-1.5">
                 <span className="font-semibold text-slate-800">{company}</span>
                 <span className="text-slate-300">•</span>
                 <span className="inline-flex items-center gap-1">
@@ -87,24 +109,6 @@ export function JobCard({ job, onSelect, onToggleBookmark }) {
                   <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   {formatPostedDate(postedDate)}
                 </span>
-
-                {/* Replaced Deadline with Match Score & Priority Badges */}
-                <span className="text-slate-300">•</span>
-                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-semibold ${matchBadgeClass}`}>
-                  <Sparkles className={`h-3 w-3 ${matchIconClass}`} />
-                  <span>{matchScore}/10 Match</span>
-                </div>
-                {priority && (
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                    priority === 'High'
-                      ? 'bg-amber-50 text-amber-800 border-amber-200/90'
-                      : priority === 'Medium'
-                      ? 'bg-blue-50 text-blue-800 border-blue-200/90'
-                      : 'bg-slate-50 text-slate-600 border-slate-200'
-                  }`}>
-                    {priority}
-                  </span>
-                )}
               </div>
             </div>
           </div>
