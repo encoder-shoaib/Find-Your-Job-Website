@@ -50,9 +50,27 @@ export default function App() {
         fetchAgentStatus(),
       ]);
       if (statsRes?.success) {
+        // Anti-Flicker Protection: If API briefly returns 0 due to cold serverless container, check client cache
+        let effectiveTotal = statsRes.stats?.totalJobs ?? 0;
+        let effectiveRecent = statsRes.recentJobs || statsRes.stats?.recentJobs || [];
+
+        if (effectiveTotal === 0) {
+          try {
+            const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
+            if (cachedRaw) {
+              const cachedList = JSON.parse(cachedRaw);
+              if (cachedList && cachedList.length > 0) {
+                effectiveTotal = cachedList.length;
+                effectiveRecent = cachedList.slice(0, 6);
+              }
+            }
+          } catch (e) {}
+        }
+
         setStats({
           ...statsRes.stats,
-          recentJobs: statsRes.recentJobs || statsRes.stats?.recentJobs || [],
+          totalJobs: effectiveTotal,
+          recentJobs: effectiveRecent,
           categoryDistribution: statsRes.stats?.categoryDistribution || {},
           priorityDistribution: statsRes.stats?.priorityDistribution || {},
         });
@@ -90,9 +108,26 @@ export default function App() {
           fetchAgentStatus(),
         ]);
         if (statsRes?.success) {
+          let effectiveTotal = statsRes.stats?.totalJobs ?? 0;
+          let effectiveRecent = statsRes.recentJobs || statsRes.stats?.recentJobs || [];
+
+          if (effectiveTotal === 0) {
+            try {
+              const cachedRaw = localStorage.getItem('yourfiendjob_cached_jobs');
+              if (cachedRaw) {
+                const cachedList = JSON.parse(cachedRaw);
+                if (cachedList && cachedList.length > 0) {
+                  effectiveTotal = cachedList.length;
+                  effectiveRecent = cachedList.slice(0, 6);
+                }
+              }
+            } catch (e) {}
+          }
+
           setStats({
             ...statsRes.stats,
-            recentJobs: statsRes.recentJobs || statsRes.stats?.recentJobs || [],
+            totalJobs: effectiveTotal,
+            recentJobs: effectiveRecent,
             categoryDistribution: statsRes.stats?.categoryDistribution || {},
             priorityDistribution: statsRes.stats?.priorityDistribution || {},
           });
@@ -102,6 +137,11 @@ export default function App() {
     }, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleAgentRunComplete = async (res) => {
+    // Instantly refresh all platform data
+    await loadInitialData();
+  };
 
   const handleToggleRoleView = async () => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
@@ -177,6 +217,7 @@ export default function App() {
                 onNavigateJobs={() => setCurrentTab('manage-jobs')}
                 onSelectJob={handleSelectJob}
                 onOpenAdminModal={() => setIsAuthModalOpen(true)}
+                onAgentComplete={handleAgentRunComplete}
               />
             )}
 
@@ -189,7 +230,10 @@ export default function App() {
             )}
 
             {currentTab === 'activity' && (
-              <AgentActivity onOpenAdminModal={() => setIsAuthModalOpen(true)} />
+              <AgentActivity
+                onOpenAdminModal={() => setIsAuthModalOpen(true)}
+                onAgentRunComplete={handleAgentRunComplete}
+              />
             )}
 
             {currentTab === 'settings' && (

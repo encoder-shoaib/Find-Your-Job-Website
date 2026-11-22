@@ -54,11 +54,36 @@ export function AdminJobManagement({ onSelectJob }) {
 
       const res = await fetchJobs(params);
       if (res && res.success) {
-        setJobs(res.jobs || []);
+        let fetched = res.jobs || [];
+        const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || (status !== 'All'));
+
+        if (fetched.length > 0) {
+          setJobs(fetched);
+          try {
+            if (!isFilterActive) {
+              localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(fetched));
+            }
+          } catch (e) {}
+        } else if (!isFilterActive) {
+          // If no filter active but serverless cold container returned 0, restore cached jobs
+          try {
+            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            if (raw) {
+              const cached = JSON.parse(raw);
+              if (cached && cached.length > 0) {
+                fetched = cached;
+              }
+            }
+          } catch (e) {}
+          setJobs(fetched);
+        } else {
+          setJobs([]);
+        }
+
         setPagination({
           page: res.pagination?.page || 1,
           limit: res.pagination?.limit || limit,
-          total: res.pagination?.total || 0,
+          total: Math.max(fetched.length, res.pagination?.total || 0),
           pages: res.pagination?.pages || res.pagination?.totalPages || 1,
         });
       }

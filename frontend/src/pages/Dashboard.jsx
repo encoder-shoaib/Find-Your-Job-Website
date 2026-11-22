@@ -19,7 +19,7 @@ import {
 import { PriorityBadge, ScoreBadge } from '../components/ui/Badge';
 import { triggerAgentRun } from '../api';
 
-export function Dashboard({ stats, onNavigateJobs, onSelectJob }) {
+export function Dashboard({ stats, onNavigateJobs, onSelectJob, onAgentComplete }) {
   const [isRunning, setIsRunning] = useState(false);
   const [huntMsg, setHuntMsg] = useState('');
 
@@ -27,12 +27,24 @@ export function Dashboard({ stats, onNavigateJobs, onSelectJob }) {
     try {
       setIsRunning(true);
       setHuntMsg('Launching Agent...');
-      await triggerAgentRun({ limit: 5, dryRun: true });
-      setHuntMsg('Agent hunting in background! MongoDB will auto-update.');
+      const res = await triggerAgentRun({ limit: 10, dryRun: true });
+      if (res && res.success) {
+        if (res.newJobs && res.newJobs.length > 0) {
+          try {
+            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            const prev = raw ? JSON.parse(raw) : [];
+            const seen = new Set(prev.map((j) => String(j.job_id)));
+            const combined = [...res.newJobs.filter((j) => !seen.has(String(j.job_id))), ...prev];
+            localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(combined));
+          } catch (e) {}
+        }
+        setHuntMsg(`Agent finished! Added ${res.newJobs?.length || 0} new jobs.`);
+        if (onAgentComplete) onAgentComplete(res);
+      }
       setTimeout(() => {
         setIsRunning(false);
         setHuntMsg('');
-      }, 5000);
+      }, 4000);
     } catch (err) {
       setHuntMsg('Agent run failed: ' + (err.message || 'Error'));
       setIsRunning(false);

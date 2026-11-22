@@ -272,6 +272,8 @@ router.post('/run', requireAdmin, async (req, res) => {
         success: true,
         message: `Job hunting agent completed (${dryRun ? 'Dry-Run' : 'Normal'}, Discovered: ${result.newJobsCount} new jobs).`,
         startedAt: currentRun.startedAt,
+        newJobs: result.newJobs || [],
+        totalJobs: result.totalJobs || 0,
         currentRun,
       });
     } catch (err) {

@@ -54,11 +54,36 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
 
       const res = await fetchJobs(params);
       if (res && res.success) {
-        setJobs(res.jobs || []);
+        let fetched = res.jobs || [];
+        const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || showSavedOnly || minScore);
+
+        if (fetched.length > 0) {
+          setJobs(fetched);
+          try {
+            if (!isFilterActive) {
+              localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(fetched));
+            }
+          } catch (e) {}
+        } else if (!isFilterActive) {
+          // If no filter active but API returned 0 due to cold serverless container, restore cached jobs
+          try {
+            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            if (raw) {
+              const cached = JSON.parse(raw);
+              if (cached && cached.length > 0) {
+                fetched = cached;
+              }
+            }
+          } catch (e) {}
+          setJobs(fetched);
+        } else {
+          setJobs([]);
+        }
+
         setPagination({
           page: res.pagination?.page || 1,
           limit: res.pagination?.limit || limit,
-          total: res.pagination?.total || 0,
+          total: Math.max(fetched.length, res.pagination?.total || 0),
           pages: res.pagination?.pages || res.pagination?.totalPages || 1,
         });
       }
@@ -75,7 +100,7 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
     loadJobs();
   }, [page, limit, category, priority, showSavedOnly, minScore, sortBy]);
 
-  // LIVE AUTO-SYNC: Polls MongoDB every 15 seconds so cards update automatically when the agent runs
+  // LIVE AUTO-SYNC: Polls MongoDB every 15 seconds with Anti-Flicker Protection
   useEffect(() => {
     const autoSyncInterval = setInterval(async () => {
       try {
@@ -93,11 +118,26 @@ export function UserDashboard({ onSelectJob, defaultTab = 'all' }) {
 
         const res = await fetchJobs(params);
         if (res && res.success) {
-          setJobs(res.jobs || []);
+          const fetched = res.jobs || [];
+          const isFilterActive = Boolean(search.trim() || (category !== 'All') || (priority !== 'All') || showSavedOnly || minScore);
+
+          if (fetched.length > 0) {
+            setJobs(fetched);
+            try {
+              if (!isFilterActive) {
+                localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(fetched));
+              }
+            } catch (e) {}
+          } else if (!isFilterActive) {
+            // Do not wipe out existing loaded jobs if serverless container briefly returned 0
+          } else {
+            setJobs([]);
+          }
+
           setPagination({
             page: res.pagination?.page || 1,
             limit: res.pagination?.limit || limit,
-            total: res.pagination?.total || 0,
+            total: Math.max(fetched.length, res.pagination?.total || 0),
             pages: res.pagination?.pages || res.pagination?.totalPages || 1,
           });
         }

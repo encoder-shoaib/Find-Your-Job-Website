@@ -22,7 +22,7 @@ import {
 import { fetchAgentStatus, fetchAgentLogs, fetchSearchHistory, triggerAgentRun, clearAllJobs } from '../api';
 import { CardSpotlight } from '../components/ui/CardSpotlight';
 
-export function AgentActivity({ onOpenAdminModal }) {
+export function AgentActivity({ onOpenAdminModal, onAgentRunComplete }) {
   const [statusData, setStatusData] = useState(null);
   const [logs, setLogs] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
@@ -30,7 +30,7 @@ export function AgentActivity({ onOpenAdminModal }) {
   const [triggering, setTriggering] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [triggerResult, setTriggerResult] = useState(null);
-  const [runParams, setRunParams] = useState({ limit: 5, dryRun: true });
+  const [runParams, setRunParams] = useState({ limit: 10, dryRun: true });
   const pollingRef = useRef(null);
 
   const loadData = async () => {
@@ -77,6 +77,25 @@ export function AgentActivity({ onOpenAdminModal }) {
       const res = await triggerAgentRun(runParams);
       if (res && res.success) {
         setTriggerResult(res);
+
+        // Immediate client-side persistence of newly found jobs
+        if (res.newJobs && res.newJobs.length > 0) {
+          try {
+            const raw = localStorage.getItem('yourfiendjob_cached_jobs');
+            const prev = raw ? JSON.parse(raw) : [];
+            const seen = new Set(prev.map((j) => String(j.job_id)));
+            const combined = [...res.newJobs.filter((j) => !seen.has(String(j.job_id))), ...prev];
+            localStorage.setItem('yourfiendjob_cached_jobs', JSON.stringify(combined));
+          } catch (e) {}
+        }
+
+        // Notify parent App.jsx so Overview metrics and Jobs badge instantly update!
+        if (onAgentRunComplete) {
+          onAgentRunComplete(res);
+        }
+
+        // Immediately refresh local metrics and logs
+        await loadData();
       }
 
       // Active polling every 2 seconds while the agent executes in background
@@ -135,11 +154,15 @@ export function AgentActivity({ onOpenAdminModal }) {
       setClearing(true);
       const res = await clearAllJobs();
       if (res && res.success) {
+        localStorage.removeItem('yourfiendjob_cached_jobs');
+        if (onAgentRunComplete) {
+          onAgentRunComplete({ newJobs: [], totalJobs: 0 });
+        }
         setTriggerResult({
           success: true,
           message: 'All job data wiped successfully! Database is now empty (0 jobs). Click "Run Agent Now" to test collecting new jobs.',
         });
-        loadData();
+        await loadData();
       }
     } catch (err) {
       setTriggerResult({
@@ -321,7 +344,11 @@ export function AgentActivity({ onOpenAdminModal }) {
                   <option value={3}>3 jobs</option>
                   <option value={5}>5 jobs</option>
                   <option value={10}>10 jobs</option>
+                  <option value={15}>15 jobs</option>
                   <option value={20}>20 jobs</option>
+                  <option value={25}>25 jobs</option>
+                  <option value={30}>30 jobs</option>
+                  <option value={50}>50 jobs</option>
                 </select>
               </div>
 
