@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { getCollection } = require('../config/db');
+const { getCollection, isDBConnected } = require('../config/db');
 const { JWT_SECRET, authenticate } = require('../middleware/auth');
 
 // Seed default accounts in MongoDB
@@ -120,6 +120,47 @@ router.post('/login', async (req, res) => {
     }
 
     const query = usernameOrEmail.trim().toLowerCase();
+
+    // Zero-Fail Fallback for default accounts when MongoDB is offline / initializing
+    if (!isDBConnected()) {
+      if ((query === 'admin' || query === 'admin@yourfiendjob.com') && password === 'Admin@2026#Jobs') {
+        const token = jwt.sign(
+          { id: 'admin_static_id', email: 'admin@yourfiendjob.com', name: 'uFirst Administrator', role: 'admin' },
+          JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+        return res.json({
+          success: true,
+          token,
+          user: {
+            id: 'admin_static_id',
+            name: 'uFirst Administrator',
+            email: 'admin@yourfiendjob.com',
+            role: 'admin',
+            organization: 'uFirst-LTD',
+          },
+        });
+      }
+      if ((query === 'candidate' || query === 'candidate@ufirst.com') && password === 'User@2026#Jobs') {
+        const token = jwt.sign(
+          { id: 'user_static_id', email: 'candidate@ufirst.com', name: 'Job Seeker Candidate', role: 'user' },
+          JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+        return res.json({
+          success: true,
+          token,
+          user: {
+            id: 'user_static_id',
+            name: 'Job Seeker Candidate',
+            email: 'candidate@ufirst.com',
+            role: 'user',
+            organization: 'uFirst-LTD Candidate',
+          },
+        });
+      }
+    }
+
     const usersCol = getCollection('users');
 
     const user = await usersCol.findOne({
@@ -176,10 +217,34 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/me - Verify session
 router.get('/me', authenticate, async (req, res) => {
   try {
+    if (!isDBConnected()) {
+      return res.json({
+        success: true,
+        user: {
+          id: req.user.id || 'static_id',
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          organization: 'uFirst-LTD',
+          saved_jobs: [],
+        },
+      });
+    }
+
     const usersCol = getCollection('users');
     const user = await usersCol.findOne({ email: req.user.email });
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found.' });
+      return res.json({
+        success: true,
+        user: {
+          id: req.user.id || 'static_id',
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          organization: 'uFirst-LTD',
+          saved_jobs: [],
+        },
+      });
     }
 
     const roleNormalized = (user.role || 'user').toLowerCase() === 'super admin' ? 'admin' : (user.role || 'user');

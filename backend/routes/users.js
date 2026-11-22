@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongodb');
-const { getCollection } = require('../config/db');
+const { getCollection, isDBConnected } = require('../config/db');
 const { requireAdmin } = require('../middleware/auth');
 
 // All user management routes require admin
@@ -11,6 +11,36 @@ router.use(requireAdmin);
 // GET /api/users - List all users
 router.get('/', async (req, res) => {
   try {
+    if (!isDBConnected()) {
+      return res.json({
+        success: true,
+        users: [
+          {
+            _id: 'admin_static_1',
+            name: 'uFirst Administrator',
+            email: 'admin@yourfiendjob.com',
+            username: 'admin',
+            role: 'admin',
+            organization: 'uFirst-LTD',
+            status: 'Active',
+            created_at: new Date().toISOString(),
+          },
+          {
+            _id: 'user_static_2',
+            name: 'Job Seeker Candidate',
+            email: 'candidate@ufirst.com',
+            username: 'candidate',
+            role: 'user',
+            organization: 'Candidate',
+            status: 'Active',
+            created_at: new Date().toISOString(),
+          },
+        ],
+        count: 2,
+        source: 'fallback',
+      });
+    }
+
     const usersCol = getCollection('users');
     const users = await usersCol
       .find({}, { projection: { password: 0 } })

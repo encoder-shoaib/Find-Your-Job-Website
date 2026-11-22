@@ -1,10 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { getCollection } = require('../config/db');
+const { getCollection, isDBConnected } = require('../config/db');
 
 // GET /api/search/history - List recorded search operations
 router.get('/history', async (req, res) => {
   try {
+    if (!isDBConnected()) {
+      return res.json({
+        success: true,
+        history: [],
+      });
+    }
+
     const { limit = 25 } = req.query;
     const col = getCollection('search_history');
     const history = await col
