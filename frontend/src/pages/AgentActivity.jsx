@@ -297,7 +297,7 @@ export function AgentActivity({ onOpenAdminModal }) {
 
       {/* Manual Trigger & Configuration Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Bot className="h-5 w-5 text-indigo-600" />
@@ -309,61 +309,69 @@ export function AgentActivity({ onOpenAdminModal }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-              <label>Limit:</label>
-              <select
-                value={runParams.limit}
-                onChange={(e) => setRunParams({ ...runParams, limit: parseInt(e.target.value, 10) })}
-                className="rounded border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-800"
-              >
-                <option value={3}>3 jobs</option>
-                <option value={5}>5 jobs</option>
-                <option value={10}>10 jobs</option>
-                <option value={20}>20 jobs</option>
-              </select>
+            {/* Parameters Pill */}
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                <label className="text-slate-500">Limit:</label>
+                <select
+                  value={runParams.limit}
+                  onChange={(e) => setRunParams({ ...runParams, limit: parseInt(e.target.value, 10) })}
+                  className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-800"
+                >
+                  <option value={3}>3 jobs</option>
+                  <option value={5}>5 jobs</option>
+                  <option value={10}>10 jobs</option>
+                  <option value={20}>20 jobs</option>
+                </select>
+              </div>
+
+              <div className="h-3.5 w-px bg-slate-200" />
+
+              <label className="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={runParams.dryRun}
+                  onChange={(e) => setRunParams({ ...runParams, dryRun: e.target.checked })}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-0"
+                />
+                <span>Dry Run</span>
+              </label>
             </div>
 
-            <label className="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={runParams.dryRun}
-                onChange={(e) => setRunParams({ ...runParams, dryRun: e.target.checked })}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-0"
-              />
-              <span>Dry Run (No Email)</span>
-            </label>
+            {/* Action Buttons: Run Agent Now & Clear All Jobs always side-by-side */}
+            <div className="flex items-center gap-2 flex-nowrap">
+              <button
+                onClick={handleRunAgent}
+                disabled={isAgentActive}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-xs font-bold shadow-xs transition cursor-pointer whitespace-nowrap ${
+                  isAgentActive 
+                    ? 'bg-amber-600 hover:bg-amber-700 cursor-not-allowed opacity-90' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'
+                }`}
+              >
+                {isAgentActive ? (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-white" />
+                    <span>Hunting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3.5 w-3.5 fill-current" />
+                    <span>Run Agent Now</span>
+                  </>
+                )}
+              </button>
 
-            <button
-              onClick={handleRunAgent}
-              disabled={isAgentActive}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-xs font-bold shadow-xs transition cursor-pointer ${
-                isAgentActive 
-                  ? 'bg-amber-600 hover:bg-amber-700 cursor-not-allowed opacity-90' 
-                  : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'
-              }`}
-            >
-              {isAgentActive ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin text-white" />
-                  <span>Agent Hunting in Progress...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-3.5 w-3.5 fill-current" />
-                  <span>Run Agent Now</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleClearAllJobs}
-              disabled={isAgentActive || clearing}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer"
-              title="Delete all jobs from deployment database to test collecting from 0"
-            >
-              <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-              <span>{clearing ? 'Clearing...' : 'Clear All Jobs'}</span>
-            </button>
+              <button
+                onClick={handleClearAllJobs}
+                disabled={isAgentActive || clearing}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                title="Delete all jobs from deployment database to test collecting from 0"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                <span>{clearing ? 'Clearing...' : 'Clear All Jobs'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -431,7 +439,7 @@ export function AgentActivity({ onOpenAdminModal }) {
             <Search className="h-4 w-4 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-800">Recent Crawl & Search History</h2>
           </div>
-          <span className="text-[11px] text-slate-500 font-mono">From MongoDB search_history</span>
+          <span className="text-[11px] text-slate-500 font-mono">search_history audit log</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -504,7 +512,7 @@ export function AgentActivity({ onOpenAdminModal }) {
             <Terminal className="h-4 w-4 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-800">Agent Execution Logs</h2>
           </div>
-          <span className="text-[11px] text-slate-500 font-mono">From MongoDB agent_logs</span>
+          <span className="text-[11px] text-slate-500 font-mono">agent_logs stream</span>
         </div>
 
         <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getCollection, isDBConnected } = require('../config/db');
 const { JOBS_JSON_PATH } = require('../config/paths');
-const { getStoredJobs, addJobs } = require('./jobsStore');
+const { getStoredJobs, addJobs, addSearchHistory, addAgentLog } = require('./jobsStore');
 
 const SEARCH_API_ENDPOINT = 'https://api.bdjobs.com/jobs/api/v1/JobSearch/GetJobSearch';
 
@@ -67,14 +67,21 @@ function scoreJob(title = '', desc = '', location = '', exp = '') {
  * Runs completely natively without requiring Python or external child processes.
  */
 async function runCloudAgent({ limit = 5, dryRun = true } = {}, onLog = () => {}, onStatus = () => {}) {
-  const log = (msg) => {
+  const log = (msg, action = 'CRAWLER_LOG') => {
     const time = new Date().toLocaleTimeString();
     const formatted = `[${time}] ${msg}`;
     onLog(formatted);
     onStatus(msg);
+
+    // Record to global in-memory Agent Logs
+    addAgentLog({
+      action,
+      message: msg,
+      timestamp: new Date().toISOString(),
+    });
   };
 
-  log(`[Cloud Agent Engine] Initialized autonomous crawler (Limit: ${limit}, Dry-Run: ${dryRun})...`);
+  log(`[Cloud Agent Engine] Initialized autonomous crawler (Limit: ${limit}, Dry-Run: ${dryRun})...`, 'AGENT_START');
 
   // 1. Gather existing known job IDs to prevent duplicate processing
   const knownIds = new Set();
@@ -215,27 +222,37 @@ async function runCloudAgent({ limit = 5, dryRun = true } = {}, onLog = () => {}
       log(`[Storage Warning] Storage update notice: ${jErr.message}`);
     }
 
-    // Record search history in MongoDB
-    if (isDBConnected()) {
-      try {
-        const searchCol = getCollection('search_history');
-        await searchCol.insertOne({
-          timestamp: new Date().toISOString(),
-          keywords: SEARCH_KEYWORDS.slice(0, 5),
-          category_ids: [8],
-          found_count: totalFoundOnApi,
-          new_count: newDiscoveredJobs.length,
-          status: 'Success',
-          source: 'Cloud Serverless Agent',
-        });
-        log(`[History] Search audit log recorded in MongoDB.`);
-      } catch (hErr) {}
-    }
   } else {
     log(`All searched tech jobs are already up to date. 0 duplicates added.`);
   }
 
-  log(`Autonomous hunt completed successfully. Exit code: 0.`);
+  // Always record Search History across both in-memory store and MongoDB
+  const historyItem = {
+    timestamp: new Date().toISOString(),
+    keywords: SEARCH_KEYWORDS.slice(0, 5),
+    category_ids: [8],
+    found_count: totalFoundOnApi,
+    new_count: newDiscoveredJobs.length,
+    duplicates_skipped: Math.max(0, totalFoundOnApi - newDiscoveredJobs.length),
+    status: 'Success',
+    source: isDBConnected() ? 'MongoDB' : 'Cloud Serverless Engine',
+  };
+  addSearchHistory(historyItem);
+
+  if (isDBConnected()) {
+    try {
+      const searchCol = getCollection('search_history');
+      await searchCol.insertOne(historyItem);
+      const logsCol = getCollection('agent_logs');
+      await logsCol.insertOne({
+        action: 'AGENT_COMPLETE',
+        message: `Hunt finished. ${newDiscoveredJobs.length} new jobs persisted.`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (hErr) {}
+  }
+
+  log(`Autonomous hunt completed successfully. Exit code: 0.`, 'AGENT_COMPLETE');
 
   return {
     success: true,

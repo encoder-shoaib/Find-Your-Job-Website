@@ -16,7 +16,7 @@ const {
 
 const { requireAdmin } = require('../middleware/auth');
 const { runCloudAgent } = require('../services/cloudAgent');
-const { getStoredJobs, clearAllStoredJobs } = require('../services/jobsStore');
+const { getStoredJobs, clearAllStoredJobs, getAgentLogs } = require('../services/jobsStore');
 
 let isAgentRunning = false;
 let currentRun = {
@@ -164,16 +164,25 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// GET /api/agent/logs - Fetch recent execution logs from MongoDB & local log file
+// GET /api/agent/logs - Fetch recent execution logs from MongoDB, local file, or in-memory store
 router.get('/logs', async (req, res) => {
   try {
     const { limit = 50 } = req.query;
-    const logsCol = getCollection('agent_logs');
-    const mongoLogs = await logsCol
-      .find({})
-      .sort({ timestamp: -1 })
-      .limit(parseInt(limit, 10))
-      .toArray();
+    const limitNum = parseInt(limit, 10) || 50;
+    let mongoLogs = [];
+
+    if (isDBConnected()) {
+      try {
+        const logsCol = getCollection('agent_logs');
+        mongoLogs = await logsCol
+          .find({})
+          .sort({ timestamp: -1 })
+          .limit(limitNum)
+          .toArray();
+      } catch (e) {
+        console.warn('[Agent] MongoDB agent_logs warning:', e.message);
+      }
+    }
 
     // Also get last 30 lines from local file log if available
     let fileLogs = [];
@@ -185,14 +194,23 @@ router.get('/logs', async (req, res) => {
       } catch (e) {}
     }
 
+    const inMemoryLogs = getAgentLogs(limitNum);
+    const combinedLogs = (mongoLogs && mongoLogs.length > 0)
+      ? mongoLogs
+      : inMemoryLogs;
+
     res.json({
       success: true,
-      logs: mongoLogs,
+      logs: combinedLogs,
       fileLogs,
     });
   } catch (error) {
     console.error('Error in GET /api/agent/logs:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({
+      success: true,
+      logs: getAgentLogs(50),
+      fileLogs: [],
+    });
   }
 });
 
