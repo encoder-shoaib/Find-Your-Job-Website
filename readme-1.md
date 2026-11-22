@@ -123,6 +123,7 @@
 | কম্পোনেন্ট | টেস্ট কমান্ড / এন্ডপয়েন্ট | টেস্ট ফলাফল | স্ট্যাটাস |
 |---|---|---|---|
 | **Frontend CDN** | `GET https://frontend-eight-omega-44.vercel.app` | `HTTP/1.1 200 OK` (Vite SPA Load) | ✅ PASSED |
+| **Backend Root** | `GET https://backend-beta-six-21.vercel.app/` | `{"success":true,"status":"running","service":"YourFiendJob Backend API"}` | ✅ PASSED |
 | **Backend Health** | `GET https://backend-beta-six-21.vercel.app/api/health` | `{"status":"healthy","service":"YourFiendJob API Server"}` | ✅ PASSED |
 | **Auth Credentials** | `GET https://backend-beta-six-21.vercel.app/api/auth/demo-credentials` | `{"success":true, accounts: {...}}` | ✅ PASSED |
 | **CORS Policy** | Cross-Origin Header verification | `Access-Control-Allow-Origin: *` | ✅ PASSED |
